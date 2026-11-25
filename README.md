@@ -257,3 +257,5 @@ layouts, bind-now rules, load-config offsets).
   manifests (Step 7 / Step 8 assert this on every run). The
   downloaded real `.exe` is likewise local only and is never
   pushed.
+
+License: MIT — see LICENSE
