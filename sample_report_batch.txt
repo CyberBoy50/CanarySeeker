@@ -1,7 +1,8 @@
-CanarySeeker v1.0 — Binary Exploit-Mitigation Checker
+CanarySeeker v1.1 — Binary Exploit-Mitigation Checker
 by CyberBoy50 — AUTHORIZED USE ONLY
+DISCLAIMER — AUTHORIZED USE ONLY. This tool was built for ethical, authorized security testing only. You are using it on your own responsibility. The authors are not responsible for how you use it, or for anything that happens because of your use. Only test systems, code, and data you own or have explicit written permission to test — testing anything else may be illegal (for example, PECA 2016 in Pakistan).
 ==========================================================
-Scanned: 2026-11-25 18:16:01
+Scanned: 2026-11-25 19:23:04
 Binaries: 16 (2 skipped)
 
 Binary: test_bins/elf32_be
@@ -422,4 +423,4 @@ Skipped (2)
   test_bins/manifest.json — Not a binary I can check: test_bins/manifest.json is neither ELF nor PE (checked the first bytes — this is not a binary file)
   test_bins/test_prog.c — Not a binary I can check: test_bins/test_prog.c is neither ELF nor PE (checked the first bytes — this is not a binary file)
 
-End of report — CanarySeeker v1.0 by CyberBoy50
+End of report — CanarySeeker v1.1 by CyberBoy50

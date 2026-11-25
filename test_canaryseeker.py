@@ -354,6 +354,8 @@ def step_6():
         check("Hardening score" in text,
               "%s report has the score" % name)
         check("Findings" in text, "%s report has findings" % name)
+        check("DISCLAIMER" in text and "AUTHORIZED USE ONLY" in text,
+              "%s report carries the disclaimer" % name)
         os.remove(out)
     # Exit codes: hardened 0, unhardened 1.
     rc = run([sys.executable, os.path.join(HERE, "canaryseeker.py"),
@@ -484,7 +486,26 @@ def cli_bits():
     check("CC-001" in rc.stdout and "CC-013" in rc.stdout,
           "--list-checks lists CC-001..CC-013")
     rc = run([sys.executable, here, "--version"])
-    check("CanarySeeker v1.0" in rc.stdout, "--version prints 1.0")
+    check("CanarySeeker v1.1" in rc.stdout, "--version prints 1.1")
+    # Disclaimer: on screen (banner, shown by --list-checks / menu —
+    # direct scans print the SCAN block instead), in the text report
+    # and in JSON.
+    rc = run([sys.executable, here, "--list-checks"])
+    check("DISCLAIMER" in rc.stdout,
+          "banner prints the disclaimer")
+    check("PECA 2016" in rc.stdout,
+          "banner disclaimer names PECA 2016")
+    rc = run([sys.executable, here,
+              os.path.join(BINS, "hardened"), "--json", "--no-color",
+              "-o", os.path.join(HERE, ".cli_disc.json")])
+    with open(os.path.join(HERE, ".cli_disc.json")) as fh:
+        doc = json.load(fh)
+    check(doc.get("version") == "1.1", "JSON report says version 1.1")
+    check("DISCLAIMER" in doc.get("disclaimer", ""),
+          "JSON report carries the disclaimer field")
+    for f in (".cli_disc.txt", ".cli_disc.json"):
+        if os.path.exists(os.path.join(HERE, f)):
+            os.remove(f)
     # --fail-on: a High finding on the unhardened binary exits 2.
     rc = run([sys.executable, here,
               os.path.join(BINS, "unhardened"), "-q",

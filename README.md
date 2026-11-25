@@ -18,6 +18,10 @@ and it runs on Windows, macOS and Linux.
 > or have written permission to test. Checking someone else's
 > software without permission is unauthorized access (Prevention of
 > Electronic Crimes Act, 2016, Pakistan).
+>
+> DISCLAIMER — AUTHORIZED USE ONLY. This tool was built for ethical, authorized security testing only. You are using it on your own responsibility. The authors are not responsible for how you use it, or for anything that happens because of your use. Only test systems, code, and data you own or have explicit written permission to test — testing anything else may be illegal (for example, PECA 2016 in Pakistan).
+>
+> **Version 1.1** — adds the explicit authorized-use responsibility disclaimer above (banner, generated reports, README).
 
 ## The five ELF mitigations
 

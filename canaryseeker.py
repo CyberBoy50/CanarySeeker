@@ -101,9 +101,17 @@ import json
 import os
 import struct
 import sys
+import textwrap
 
-VERSION = "1.0"
+VERSION = "1.1"
 AUTHOR = "CyberBoy50"
+DISCLAIMER = ("DISCLAIMER — AUTHORIZED USE ONLY. This tool was built for "
+              "ethical, authorized security testing only. You are using it "
+              "on your own responsibility. The authors are not responsible "
+              "for how you use it, or for anything that happens because of "
+              "your use. Only test systems, code, and data you own or have "
+              "explicit written permission to test — testing anything else "
+              "may be illegal (for example, PECA 2016 in Pakistan).")
 DEFAULT_OUTPUT = "canaryseeker_report.txt"
 QUIET = False
 
@@ -190,6 +198,8 @@ def print_banner():
               f"or have written permission to test.{C.RST}")
         print(f"{C.DIM}  Checking someone else's software without permission "
               f"is unauthorized access (PECA 2016).{C.RST}")
+        for line in textwrap.wrap(DISCLAIMER, width=56):
+            print(f"{C.YEL}  {line}{C.RST}")
         print()
 
 
@@ -1302,6 +1312,7 @@ def build_report_text(results, skipped):
     lines.append("CanarySeeker v%s — Binary Exploit-Mitigation Checker"
                  % VERSION)
     lines.append("by %s — AUTHORIZED USE ONLY" % AUTHOR)
+    lines.append(DISCLAIMER)
     lines.append("=" * 58)
     lines.append("Scanned: %s"
                  % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -1377,6 +1388,7 @@ def build_report_json(results, skipped):
         "tool": "CanarySeeker",
         "version": VERSION,
         "author": AUTHOR,
+        "disclaimer": DISCLAIMER,
         "results": [result_to_json(r) for r in results],
         "skipped": skipped,
     }
