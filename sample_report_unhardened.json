@@ -1,0 +1,128 @@
+{
+  "tool": "CanarySeeker",
+  "version": "1.0",
+  "author": "CyberBoy50",
+  "results": [
+    {
+      "file": "test_bins/unhardened",
+      "format": "ELF",
+      "header": {
+        "class": 64,
+        "endian": "little",
+        "type": "ET_EXEC",
+        "machine": "x86-64",
+        "static": false,
+        "stripped": false,
+        "shared": false,
+        "soname": null,
+        "needed": [
+          "libc.so.6"
+        ],
+        "symbol_table": "symtab"
+      },
+      "score": 10,
+      "grade": "F",
+      "verdicts": [
+        {
+          "code": "CC-001",
+          "check": "RELRO",
+          "verdict": "Missing",
+          "evidence": "No GNU_RELRO segment \u2014 the GOT is fully writable.",
+          "severity": "high",
+          "fix": "Link with -Wl,-z,relro,-z,now for Full RELRO."
+        },
+        {
+          "code": "CC-002",
+          "check": "Stack canary",
+          "verdict": "Missing",
+          "evidence": "No __stack_chk_fail symbol in .symtab \u2014 the binary was not compiled with stack protection.",
+          "severity": "high",
+          "fix": "Compile with -fstack-protector-strong (or -all)."
+        },
+        {
+          "code": "CC-003",
+          "check": "NX",
+          "verdict": "Missing",
+          "evidence": "GNU_STACK segment has the execute flag (RWE) \u2014 the stack is executable.",
+          "severity": "high",
+          "fix": "Link with -Wl,-z,noexecstack."
+        },
+        {
+          "code": "CC-004",
+          "check": "PIE",
+          "verdict": "Missing",
+          "evidence": "File type ET_EXEC \u2014 the binary loads at a fixed address.",
+          "severity": "medium",
+          "fix": "Compile and link with -pie -fPIE."
+        },
+        {
+          "code": "CC-005",
+          "check": "FORTIFY",
+          "verdict": "Missing",
+          "evidence": "No *_chk symbols \u2014 no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.",
+          "severity": "low",
+          "fix": "Compile with -O2 -D_FORTIFY_SOURCE=2."
+        },
+        {
+          "code": "CC-006",
+          "check": "RPATH / RUNPATH",
+          "verdict": "Present",
+          "evidence": "No DT_RPATH or DT_RUNPATH in the dynamic section.",
+          "severity": null,
+          "fix": null
+        }
+      ],
+      "findings": [
+        {
+          "code": "CC-001",
+          "title": "RELRO: Missing",
+          "severity": "high",
+          "evidence": "No GNU_RELRO segment \u2014 the GOT is fully writable.",
+          "location": "RELRO",
+          "fix": "Link with -Wl,-z,relro,-z,now for Full RELRO."
+        },
+        {
+          "code": "CC-002",
+          "title": "Stack canary: Missing",
+          "severity": "high",
+          "evidence": "No __stack_chk_fail symbol in .symtab \u2014 the binary was not compiled with stack protection.",
+          "location": "Stack canary",
+          "fix": "Compile with -fstack-protector-strong (or -all)."
+        },
+        {
+          "code": "CC-003",
+          "title": "NX: Missing",
+          "severity": "high",
+          "evidence": "GNU_STACK segment has the execute flag (RWE) \u2014 the stack is executable.",
+          "location": "NX",
+          "fix": "Link with -Wl,-z,noexecstack."
+        },
+        {
+          "code": "CC-004",
+          "title": "PIE: Missing",
+          "severity": "medium",
+          "evidence": "File type ET_EXEC \u2014 the binary loads at a fixed address.",
+          "location": "PIE",
+          "fix": "Compile and link with -pie -fPIE."
+        },
+        {
+          "code": "CC-005",
+          "title": "FORTIFY: Missing",
+          "severity": "low",
+          "evidence": "No *_chk symbols \u2014 no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.",
+          "location": "FORTIFY",
+          "fix": "Compile with -O2 -D_FORTIFY_SOURCE=2."
+        }
+      ],
+      "fortify": {
+        "fortified": [],
+        "fortifiable": [
+          "memcpy",
+          "strcpy"
+        ],
+        "score": 0
+      }
+    }
+  ],
+  "skipped": []
+}

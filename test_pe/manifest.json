@@ -1,0 +1,74 @@
+{
+  "pe64_hardened.exe": {
+    "ASLR": "Present",
+    "DEP": "Present",
+    "CFG": "Present",
+    "SafeSEH": "n/a",
+    "GS": "Present",
+    "FI": "Present",
+    "Isolation": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
+  },
+  "pe64_unhardened.exe": {
+    "ASLR": "Missing",
+    "DEP": "Missing",
+    "CFG": "Missing",
+    "SafeSEH": "n/a",
+    "GS": "Missing",
+    "FI": "Missing",
+    "Isolation": "Missing",
+    "score": 5,
+    "grade": "F",
+    "exit": 1
+  },
+  "pe32_hardened.exe": {
+    "ASLR": "Present",
+    "DEP": "Present",
+    "CFG": "Present",
+    "SafeSEH": "Present",
+    "GS": "Present",
+    "FI": "Present",
+    "Isolation": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
+  },
+  "pe32_unhardened.exe": {
+    "ASLR": "Missing",
+    "DEP": "Missing",
+    "CFG": "Missing",
+    "SafeSEH": "n/a",
+    "GS": "Missing",
+    "FI": "Missing",
+    "Isolation": "Missing",
+    "score": 5,
+    "grade": "F",
+    "exit": 1
+  },
+  "pe64_no_reloc.exe": {
+    "ASLR": "Present",
+    "DEP": "Present",
+    "CFG": "Present",
+    "SafeSEH": "n/a",
+    "GS": "Present",
+    "FI": "Missing",
+    "Isolation": "Missing",
+    "score": 90,
+    "grade": "A",
+    "exit": 1
+  },
+  "pe32_partial_cfg.exe": {
+    "ASLR": "Present",
+    "DEP": "Present",
+    "CFG": "Partial",
+    "SafeSEH": "Present",
+    "GS": "Present",
+    "FI": "Present",
+    "Isolation": "Present",
+    "score": 90,
+    "grade": "A",
+    "exit": 1
+  }
+}

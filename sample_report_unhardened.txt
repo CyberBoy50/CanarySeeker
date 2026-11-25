@@ -1,0 +1,45 @@
+CanarySeeker v1.0 — Binary Exploit-Mitigation Checker
+by CyberBoy50 — AUTHORIZED USE ONLY
+==========================================================
+Scanned: 2026-11-25 18:16:01
+Binaries: 1 (0 skipped)
+
+Binary: test_bins/unhardened
+Format: ELF
+Header: 64-bit little, ET_EXEC, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 0 fortified, 2 fortifiable, score 0%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Missing  No GNU_RELRO segment — the GOT is fully writable.
+  [CC-002] Stack canary       Missing  No __stack_chk_fail symbol in .symtab — the binary was not compiled with stack protection.
+  [CC-003] NX                 Missing  GNU_STACK segment has the execute flag (RWE) — the stack is executable.
+  [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
+  [CC-005] FORTIFY            Missing  No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (5)
+----------------------------------------------------------
+  [HIGH] [CC-001] RELRO: Missing
+      Evidence: No GNU_RELRO segment — the GOT is fully writable.
+      Fix: Link with -Wl,-z,relro,-z,now for Full RELRO.
+  [HIGH] [CC-002] Stack canary: Missing
+      Evidence: No __stack_chk_fail symbol in .symtab — the binary was not compiled with stack protection.
+      Fix: Compile with -fstack-protector-strong (or -all).
+  [HIGH] [CC-003] NX: Missing
+      Evidence: GNU_STACK segment has the execute flag (RWE) — the stack is executable.
+      Fix: Link with -Wl,-z,noexecstack.
+  [MED] [CC-004] PIE: Missing
+      Evidence: File type ET_EXEC — the binary loads at a fixed address.
+      Fix: Compile and link with -pie -fPIE.
+  [LOW] [CC-005] FORTIFY: Missing
+      Evidence: No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
+      Fix: Compile with -O2 -D_FORTIFY_SOURCE=2.
+
+Hardening score: 10/100 (grade F) — extra, beyond the PDF
+
+==========================================================
+
+End of report — CanarySeeker v1.0 by CyberBoy50

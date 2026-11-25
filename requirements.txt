@@ -1,0 +1,4 @@
+# CanarySeeker needs nothing installed — Python standard library
+# only (argparse, json, os, struct, subprocess, sys). This file is
+# intentionally empty so `pip install -r requirements.txt` is a
+# no-op and the venv setup stays identical to the other tools.

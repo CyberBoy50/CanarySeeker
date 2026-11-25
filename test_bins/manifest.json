@@ -1,0 +1,178 @@
+{
+  "hardened": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
+  },
+  "unhardened": {
+    "RELRO": "Missing",
+    "canary": "Missing",
+    "NX": "Missing",
+    "PIE": "Missing",
+    "FORTIFY": "Missing",
+    "RPATH": "Present",
+    "score": 10,
+    "grade": "F",
+    "exit": 1
+  },
+  "partial_relro": {
+    "RELRO": "Partial",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 90,
+    "grade": "A",
+    "exit": 1
+  },
+  "no_pie": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Missing",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 90,
+    "grade": "A",
+    "exit": 1
+  },
+  "no_canary": {
+    "RELRO": "Present",
+    "canary": "Missing",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 75,
+    "grade": "C",
+    "exit": 1
+  },
+  "no_nx": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Missing",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 75,
+    "grade": "C",
+    "exit": 1
+  },
+  "no_fortify": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Missing",
+    "RPATH": "Present",
+    "score": 95,
+    "grade": "A",
+    "exit": 1
+  },
+  "static": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Missing",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 90,
+    "grade": "A",
+    "exit": 1
+  },
+  "static_pie": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
+  },
+  "rpath": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Missing",
+    "score": 90,
+    "grade": "A",
+    "exit": 1
+  },
+  "runpath": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Missing",
+    "score": 90,
+    "grade": "A",
+    "exit": 1
+  },
+  "stripped": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
+  },
+  "shared": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "n/a",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
+  },
+  "reloc": {
+    "RELRO": "n/a",
+    "canary": "Present",
+    "NX": "n/a",
+    "PIE": "n/a",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
+  },
+  "elf32_le": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Missing",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 90,
+    "grade": "A",
+    "exit": 1
+  },
+  "elf32_be": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
+  }
+}

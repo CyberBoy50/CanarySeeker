@@ -1,0 +1,425 @@
+CanarySeeker v1.0 — Binary Exploit-Mitigation Checker
+by CyberBoy50 — AUTHORIZED USE ONLY
+==========================================================
+Scanned: 2026-11-25 18:16:01
+Binaries: 16 (2 skipped)
+
+Binary: test_bins/elf32_be
+Format: ELF
+Header: 32-bit big, ET_DYN, PowerPC, stripped
+Symbol table: .dynsym
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 1 fortifiable, score 50%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_1_NOW in DT_FLAGS_1) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .dynsym.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __memcpy_chk. Fortify score 50% (1 fortified, 1 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (0)
+----------------------------------------------------------
+  No findings — every applicable mitigation is present.
+
+Hardening score: 100/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/elf32_le
+Format: ELF
+Header: 32-bit little, ET_EXEC, x86, stripped
+Symbol table: .dynsym
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 1 fortifiable, score 50%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .dynsym.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __memcpy_chk. Fortify score 50% (1 fortified, 1 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (1)
+----------------------------------------------------------
+  [MED] [CC-004] PIE: Missing
+      Evidence: File type ET_EXEC — the binary loads at a fixed address.
+      Fix: Compile and link with -pie -fPIE.
+
+Hardening score: 90/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/hardened
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (0)
+----------------------------------------------------------
+  No findings — every applicable mitigation is present.
+
+Hardening score: 100/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/libtest.so
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                n/a      Shared library (ET_DYN, SONAME set) — DSO, position-independent by nature.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (0)
+----------------------------------------------------------
+  No findings — every applicable mitigation is present.
+
+Hardening score: 100/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/no_canary
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Missing  No __stack_chk_fail symbol in .symtab — the binary was not compiled with stack protection.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (1)
+----------------------------------------------------------
+  [HIGH] [CC-002] Stack canary: Missing
+      Evidence: No __stack_chk_fail symbol in .symtab — the binary was not compiled with stack protection.
+      Fix: Compile with -fstack-protector-strong (or -all).
+
+Hardening score: 75/100 (grade C) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/no_fortify
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 0 fortified, 2 fortifiable, score 0%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Missing  No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (1)
+----------------------------------------------------------
+  [LOW] [CC-005] FORTIFY: Missing
+      Evidence: No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
+      Fix: Compile with -O2 -D_FORTIFY_SOURCE=2.
+
+Hardening score: 95/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/no_nx
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Missing  GNU_STACK segment has the execute flag (RWE) — the stack is executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (1)
+----------------------------------------------------------
+  [HIGH] [CC-003] NX: Missing
+      Evidence: GNU_STACK segment has the execute flag (RWE) — the stack is executable.
+      Fix: Link with -Wl,-z,noexecstack.
+
+Hardening score: 75/100 (grade C) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/no_pie
+Format: ELF
+Header: 64-bit little, ET_EXEC, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (1)
+----------------------------------------------------------
+  [MED] [CC-004] PIE: Missing
+      Evidence: File type ET_EXEC — the binary loads at a fixed address.
+      Fix: Compile and link with -pie -fPIE.
+
+Hardening score: 90/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/partial_relro
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Partial  GNU_RELRO present but no bind-now flag — the GOT is read-only after relocation except .got.plt, which stays writable for lazy binding.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (1)
+----------------------------------------------------------
+  [MED] [CC-001] RELRO: Partial
+      Evidence: GNU_RELRO present but no bind-now flag — the GOT is read-only after relocation except .got.plt, which stays writable for lazy binding.
+      Fix: Link with -Wl,-z,relro,-z,now to make RELRO full.
+
+Hardening score: 90/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/rpath
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Missing  Hard-coded library search path: RUNPATH=/opt/lab/lib — an attacker who can write there gets their library loaded.
+
+Findings (1)
+----------------------------------------------------------
+  [MED] [CC-006] RPATH / RUNPATH: Missing
+      Evidence: Hard-coded library search path: RUNPATH=/opt/lab/lib — an attacker who can write there gets their library loaded.
+      Fix: Remove RPATH/RUNPATH; use the system library path or $ORIGIN with care.
+
+Hardening score: 90/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/runpath
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Missing  Hard-coded library search path: RUNPATH=/opt/lab/lib — an attacker who can write there gets their library loaded.
+
+Findings (1)
+----------------------------------------------------------
+  [MED] [CC-006] RPATH / RUNPATH: Missing
+      Evidence: Hard-coded library search path: RUNPATH=/opt/lab/lib — an attacker who can write there gets their library loaded.
+      Fix: Remove RPATH/RUNPATH; use the system library path or $ORIGIN with care.
+
+Hardening score: 90/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/static
+Format: ELF
+Header: 64-bit little, ET_EXEC, x86-64, static
+Symbol table: .symtab
+Fortify: 9 fortified, 6 fortifiable, score 60%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present; static binary — no lazy binding exists, so the GOT is read-only at load.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
+  [CC-005] FORTIFY            Present  9 fortified function(s): ___asprintf_chk, ___fprintf_chk, __asprintf_chk, __fprintf_chk, __memcpy_chk, __memmove_chk, ... (9 total). Fortify score 60% (9 fortified, 6 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (1)
+----------------------------------------------------------
+  [MED] [CC-004] PIE: Missing
+      Evidence: File type ET_EXEC — the binary loads at a fixed address.
+      Fix: Compile and link with -pie -fPIE.
+
+Hardening score: 90/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/static_pie
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Fortify: 9 fortified, 6 fortifiable, score 60%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  9 fortified function(s): ___asprintf_chk, ___fprintf_chk, __asprintf_chk, __fprintf_chk, __memcpy_chk, __memmove_chk, ... (9 total). Fortify score 60% (9 fortified, 6 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (0)
+----------------------------------------------------------
+  No findings — every applicable mitigation is present.
+
+Hardening score: 100/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/stripped
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64, stripped
+Symbol table: .dynsym
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .dynsym.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (0)
+----------------------------------------------------------
+  No findings — every applicable mitigation is present.
+
+Hardening score: 100/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/test.o
+Format: ELF
+Header: 64-bit little, ET_REL, x86-64, static
+Symbol table: .symtab
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              n/a      Relocatable object (ET_REL) — no segments yet.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 n/a      Relocatable object (ET_REL) — no stack segment yet.
+  [CC-004] PIE                n/a      Relocatable object (ET_REL) — not linked yet.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (0)
+----------------------------------------------------------
+  No findings — every applicable mitigation is present.
+
+Hardening score: 100/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/unhardened
+Format: ELF
+Header: 64-bit little, ET_EXEC, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 0 fortified, 2 fortifiable, score 0%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Missing  No GNU_RELRO segment — the GOT is fully writable.
+  [CC-002] Stack canary       Missing  No __stack_chk_fail symbol in .symtab — the binary was not compiled with stack protection.
+  [CC-003] NX                 Missing  GNU_STACK segment has the execute flag (RWE) — the stack is executable.
+  [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
+  [CC-005] FORTIFY            Missing  No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+
+Findings (5)
+----------------------------------------------------------
+  [HIGH] [CC-001] RELRO: Missing
+      Evidence: No GNU_RELRO segment — the GOT is fully writable.
+      Fix: Link with -Wl,-z,relro,-z,now for Full RELRO.
+  [HIGH] [CC-002] Stack canary: Missing
+      Evidence: No __stack_chk_fail symbol in .symtab — the binary was not compiled with stack protection.
+      Fix: Compile with -fstack-protector-strong (or -all).
+  [HIGH] [CC-003] NX: Missing
+      Evidence: GNU_STACK segment has the execute flag (RWE) — the stack is executable.
+      Fix: Link with -Wl,-z,noexecstack.
+  [MED] [CC-004] PIE: Missing
+      Evidence: File type ET_EXEC — the binary loads at a fixed address.
+      Fix: Compile and link with -pie -fPIE.
+  [LOW] [CC-005] FORTIFY: Missing
+      Evidence: No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
+      Fix: Compile with -O2 -D_FORTIFY_SOURCE=2.
+
+Hardening score: 10/100 (grade F) — extra, beyond the PDF
+
+==========================================================
+
+Skipped (2)
+----------------------------------------------------------
+  test_bins/manifest.json — Not a binary I can check: test_bins/manifest.json is neither ELF nor PE (checked the first bytes — this is not a binary file)
+  test_bins/test_prog.c — Not a binary I can check: test_bins/test_prog.c is neither ELF nor PE (checked the first bytes — this is not a binary file)
+
+End of report — CanarySeeker v1.0 by CyberBoy50
