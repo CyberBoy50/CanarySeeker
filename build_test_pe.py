@@ -63,6 +63,11 @@ EXPECTED = {
                             "GS": "Present", "FI": "Present",
                             "Isolation": "Present",
                             "score": 90, "grade": "A", "exit": 1},
+    "pe32_small_lc_dir.exe": {"ASLR": "Present", "DEP": "Present",
+                            "CFG": "Present", "SafeSEH": "Present",
+                            "GS": "Present", "FI": "Present",
+                            "Isolation": "Present",
+                            "score": 100, "grade": "A", "exit": 0},
 }
 
 
@@ -122,11 +127,19 @@ def _rsrc():
     return root + entry + sub + sub_entry + data_entry + b"<?xml"
 
 
-def build_pe(path, is64, dll_chars, has_reloc, has_rsrc, lc):
+def build_pe(path, is64, dll_chars, has_reloc, has_rsrc, lc,
+             lc_dir_size=None):
     """Write one minimal PE file.
 
     lc: None (no load-config directory) or a dict with cookie,
     seh_table, seh_count, guard_fn (None = field zero).
+    lc_dir_size: override the load-config data-directory size
+    (default: the struct's own Size). A directory size smaller
+    than the struct — 64 here, like Microsoft's Process Explorer
+    (directory 64, struct 192) — is the regression case for the
+    v1.2 load-config fix: the parser must trust the struct's Size
+    field, or the SEH table and GuardCF pointer past offset 64
+    are missed and CFG/SafeSEH are wrongly reported.
     """
     sections = []  # (name, vaddr, data)
     vaddr = 0x1000
@@ -208,7 +221,9 @@ def build_pe(path, is64, dll_chars, has_reloc, has_rsrc, lc):
         dd_base = opt + 96
     # Data directories: index 2 = resource, index 10 = load config.
     struct.pack_into("<II", buf, dd_base + 2 * 8, rsrc_rva, rsrc_size)
-    struct.pack_into("<II", buf, dd_base + 10 * 8, lc_rva, lc_size)
+    struct.pack_into("<II", buf, dd_base + 10 * 8, lc_rva,
+                     lc_dir_size if lc_dir_size is not None
+                     else lc_size)
     # Section headers + raw data.
     sec_off = opt + opt_size
     raw = headers_size
@@ -252,10 +267,20 @@ def main():
          True, True,
          {"cookie": 0x12345678, "seh_table": 0x5000, "seh_count": 2,
           "guard_fn": 0}),
+        ("pe32_small_lc_dir.exe", False,
+         DC_DYNAMIC_BASE | DC_NX_COMPAT | DC_GUARD_CF
+         | DC_FORCE_INTEGRITY,
+         True, True,
+         {"cookie": 0x12345678, "seh_table": 0x5000, "seh_count": 2,
+          "guard_fn": 0x6000},
+         64),
     ]
     manifest = {}
-    for name, is64, dc, reloc, rsrc, lc in fixtures:
-        build_pe(os.path.join(OUT, name), is64, dc, reloc, rsrc, lc)
+    for spec in fixtures:
+        name, is64, dc, reloc, rsrc, lc = spec[:6]
+        lc_dir_size = spec[6] if len(spec) > 6 else None
+        build_pe(os.path.join(OUT, name), is64, dc, reloc, rsrc, lc,
+                 lc_dir_size)
         manifest[name] = EXPECTED[name]
         print("    [+] %-22s %s-bit" % (name, 64 if is64 else 32))
     with open(os.path.join(OUT, "manifest.json"), "w") as fh:

@@ -375,7 +375,7 @@ def step_7():
     print("Step 7 — full test matrix (vs manifest.json)")
     with open(os.path.join(BINS, "manifest.json")) as fh:
         manifest = json.load(fh)
-    check(len(manifest) >= 16, "manifest covers 16 binaries")
+    check(len(manifest) >= 20, "manifest covers 20 binaries")
     for name, want in sorted(manifest.items()):
         path = os.path.join(BINS, name)
         if name == "shared":
@@ -386,9 +386,10 @@ def step_7():
         got = {v["code"]: v["verdict"] for v in result["verdicts"]}
         by_name = {"RELRO": got["CC-001"], "canary": got["CC-002"],
                    "NX": got["CC-003"], "PIE": got["CC-004"],
-                   "FORTIFY": got["CC-005"], "RPATH": got["CC-006"]}
+                   "FORTIFY": got["CC-005"], "RPATH": got["CC-006"],
+                   "CET": got["CC-014"]}
         for key in ("RELRO", "canary", "NX", "PIE", "FORTIFY",
-                    "RPATH"):
+                    "RPATH", "CET"):
             check(by_name[key] == want[key],
                   "%s %s is %s (got %s)"
                   % (name, key, want[key], by_name[key]))
@@ -413,7 +414,7 @@ def step_8():
     print("Step 8 — stretch: PE, batch mode, JSON")
     with open(os.path.join(PE, "manifest.json")) as fh:
         manifest = json.load(fh)
-    check(len(manifest) == 6, "PE manifest covers 6 fixtures")
+    check(len(manifest) == 7, "PE manifest covers 7 fixtures")
     for name, want in sorted(manifest.items()):
         result = cs.analyze_path(os.path.join(PE, name))
         got = {v["code"]: v["verdict"] for v in result["verdicts"]}
@@ -447,8 +448,8 @@ def step_8():
         text = fh.read()
     check("Batch summary" in text or "Binary:" in text,
           "batch report lists the binaries")
-    check(text.count("Binary:") >= 16,
-          "batch report covers all 16 test binaries")
+    check(text.count("Binary:") >= 20,
+          "batch report covers all 20 test binaries")
     os.remove(out)
     # JSON output parses and matches the text verdicts.
     out = os.path.join(HERE, ".step8.json")
@@ -467,6 +468,125 @@ def step_8():
     os.remove(out)
 
 
+def readelf_notes_cet(path):
+    """(ibt, shstk) from readelf -n — the CET oracle.
+
+    Returns (True/False, True/False), or (False, False) when
+    readelf shows no .note.gnu.property section at all (then CET
+    is off, and the tool must say Missing, not guess)."""
+    out = readelf("-n", path)
+    if ".note.gnu.property" not in out:
+        return (False, False)
+    for line in out.splitlines():
+        if "x86 feature:" in line:
+            feats = line.split("x86 feature:")[1]
+            return ("IBT" in feats, "SHSTK" in feats)
+    return (False, False)
+
+
+def step_9():
+    print("Step 9 — CET (CC-014), real 32-bit, real PE")
+    # The three -fcf-protection fixtures, cross-checked against
+    # readelf -n (the oracle reads the same note independently).
+    cases = {
+        "cet_none": ("Missing", (False, False)),
+        "cet_ibt": ("Partial", (True, False)),
+        "cet_shstk": ("Partial", (False, True)),
+        "hardened": ("Present", (True, True)),
+    }
+    for name, (want, want_bits) in cases.items():
+        path = os.path.join(BINS, name)
+        result = cs.analyze_path(path)
+        got = {v["code"]: v["verdict"] for v in result["verdicts"]}
+        check(got["CC-014"] == want,
+              "%s CET is %s" % (name, want))
+        check(readelf_notes_cet(path) == want_bits,
+              "readelf agrees %s CET bits are %s" % (name, want_bits))
+        _kind, elf = cs.load_binary(path)
+        check((elf["cet"]["ibt"], elf["cet"]["shstk"]) == want_bits,
+              "%s parsed CET bits are %s" % (name, want_bits))
+    # Scores: CET is Low, so a lone CET finding costs 5 points.
+    for name, want_score in (("cet_none", 95), ("cet_ibt", 95),
+                             ("cet_shstk", 95)):
+        result = cs.analyze_path(os.path.join(BINS, name))
+        check(result["score"] == want_score,
+              "%s score is %d with only CET missing/partial"
+              % (name, want_score))
+    # CET does not apply to a non-x86 machine or a relocatable
+    # object — and the hand-built 32-bit LE fixture carries a real
+    # CET note, so its CET is Present, not Missing.
+    for name, want in (("elf32_be", "n/a"), ("reloc", "n/a"),
+                       ("elf32_le", "Present")):
+        path = os.path.join(BINS, "test.o" if name == "reloc"
+                            else name)
+        result = cs.analyze_path(path)
+        got = {v["code"]: v["verdict"] for v in result["verdicts"]}
+        check(got["CC-014"] == want, "%s CET is %s" % (name, want))
+    check(readelf_notes_cet(os.path.join(BINS, "elf32_le"))
+          == (True, True),
+          "readelf agrees elf32_le CET note has IBT + SHSTK")
+    # The real -m32 compile: 32-bit, x86, ET_DYN — and its CET is
+    # genuinely Missing, because Ubuntu's gcc enables CET by
+    # default for 64-bit only (no .note.gnu.property at all).
+    real32 = os.path.join(BINS, "elf32_real")
+    if os.path.isfile(real32):
+        _kind, elf = cs.load_binary(real32)
+        check(elf["class"] == 32, "elf32_real is 32-bit")
+        check(elf["machine_name"] == "x86", "elf32_real is x86")
+        check(elf["type_name"] == "ET_DYN", "elf32_real is ET_DYN")
+        check(readelf_header_type(real32) == "DYN",
+              "readelf agrees elf32_real is ET_DYN")
+        check(".note.gnu.property" not in readelf("-n", real32),
+              "readelf: elf32_real has no CET note (gcc default)")
+        result = cs.analyze_path(real32)
+        got = {v["code"]: v["verdict"] for v in result["verdicts"]}
+        check(got["CC-014"] == "Missing",
+              "elf32_real CET is Missing (matches the toolchain)")
+        check(result["score"] == 95, "elf32_real score is 95")
+        # Its segments still match readelf -l exactly.
+        mine = [(s["type_name"], s["flags_str"])
+                for s in elf["segments"]]
+        check(mine == readelf_segments(real32),
+              "elf32_real segments match readelf -l")
+    else:
+        skip("elf32_real not built — gcc-multilib not installed")
+    # The small-directory load-config regression (v1.2 fix): the
+    # fixture's directory says 64 but the struct is 0xA0, like
+    # Process Explorer — CFG and SafeSEH must still be Present.
+    result = cs.analyze_path(os.path.join(
+        PE, "pe32_small_lc_dir.exe"))
+    got = {v["code"]: v["verdict"] for v in result["verdicts"]}
+    check(got["CC-009"] == "Present",
+          "small load-config dir: CFG is still Present")
+    check(got["CC-010"] == "Present",
+          "small load-config dir: SafeSEH is still Present")
+    check(result["score"] == 100,
+          "small load-config dir: score is 100")
+    # The real Windows binary (local only, never pushed):
+    # Microsoft Sysinternals Process Explorer, downloaded from
+    # live.sysinternals.com. Read-only scan; the verdicts below
+    # are the ones recorded in DEMO.md / the project report.
+    real_pe = os.path.join(HERE, "real_world", "ProcExp.exe")
+    if os.path.isfile(real_pe):
+        result = cs.analyze_path(real_pe)
+        got = {v["code"]: v["verdict"] for v in result["verdicts"]}
+        want = {"CC-007": "Present", "CC-008": "Present",
+                "CC-009": "Present", "CC-010": "Present",
+                "CC-011": "Present", "CC-012": "Missing",
+                "CC-013": "Present"}
+        for code, want_v in sorted(want.items()):
+            check(got[code] == want_v,
+                  "ProcExp.exe %s is %s (got %s)"
+                  % (code, want_v, got[code]))
+        check(result["score"] == 95, "ProcExp.exe score is 95")
+        check(result["grade"] == "A", "ProcExp.exe grade is A")
+        check(result["header"]["bits"] == 32,
+              "ProcExp.exe is a 32-bit PE")
+    else:
+        skip("real_world/ProcExp.exe not present — real-PE scan "
+             "not run")
+
+
 def cli_bits():
     print("CLI bits and malformed input")
     here = os.path.join(HERE, "canaryseeker.py")
@@ -483,10 +603,10 @@ def cli_bits():
           "--symbols lists __stack_chk_fail")
     rc = run([sys.executable, here, "--list-checks"])
     check(rc.returncode == 0, "--list-checks exits 0")
-    check("CC-001" in rc.stdout and "CC-013" in rc.stdout,
-          "--list-checks lists CC-001..CC-013")
+    check("CC-001" in rc.stdout and "CC-014" in rc.stdout,
+          "--list-checks lists CC-001..CC-014")
     rc = run([sys.executable, here, "--version"])
-    check("CanarySeeker v1.1" in rc.stdout, "--version prints 1.1")
+    check("CanarySeeker v1.2" in rc.stdout, "--version prints 1.2")
     # Disclaimer: on screen (banner, shown by --list-checks / menu —
     # direct scans print the SCAN block instead), in the text report
     # and in JSON.
@@ -500,7 +620,7 @@ def cli_bits():
               "-o", os.path.join(HERE, ".cli_disc.json")])
     with open(os.path.join(HERE, ".cli_disc.json")) as fh:
         doc = json.load(fh)
-    check(doc.get("version") == "1.1", "JSON report says version 1.1")
+    check(doc.get("version") == "1.2", "JSON report says version 1.2")
     check("DISCLAIMER" in doc.get("disclaimer", ""),
           "JSON report carries the disclaimer field")
     for f in (".cli_disc.txt", ".cli_disc.json"):
@@ -602,6 +722,7 @@ def main():
     step_6()
     step_7()
     step_8()
+    step_9()
     cli_bits()
     oracle_pwntools()
     print("=" * 58)

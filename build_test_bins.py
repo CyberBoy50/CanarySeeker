@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Build CanarySeeker's test binaries with gcc (plus hand-built
 32-bit ELF fixtures for the class/endianness paths gcc cannot
-produce here — no gcc-multilib is installed, so -m32 does not link).
+produce here — the big-endian PowerPC fixture; the little-endian
+fixture is hand-built too, so its bytes are exact. A real -m32
+compile (elf32_real) is also built now that gcc-multilib is
+installed).
 
 Every binary is compiled from the same small C program with explicit
 flags for every mitigation dimension, so the expected verdicts are
@@ -105,75 +108,131 @@ MATRIX = [
       "-Wl,--enable-new-dtags,-rpath,/opt/lab/lib",
       "-O2", "-D_FORTIFY_SOURCE=2"],
      "hardened + hard-coded RUNPATH"),
+    ("cet_none",
+     ["-fstack-protector-all", "-pie", "-fPIE",
+      "-Wl,-z,relro,-z,now", "-Wl,-z,noexecstack",
+      "-O2", "-D_FORTIFY_SOURCE=2", "-fcf-protection=none"],
+     "hardened except CET off (-fcf-protection=none)"),
+    ("cet_ibt",
+     ["-fstack-protector-all", "-pie", "-fPIE",
+      "-Wl,-z,relro,-z,now", "-Wl,-z,noexecstack",
+      "-O2", "-D_FORTIFY_SOURCE=2", "-fcf-protection=branch"],
+     "hardened except only IBT on (-fcf-protection=branch)"),
+    ("cet_shstk",
+     ["-fstack-protector-all", "-pie", "-fPIE",
+      "-Wl,-z,relro,-z,now", "-Wl,-z,noexecstack",
+      "-O2", "-D_FORTIFY_SOURCE=2", "-fcf-protection=return"],
+     "hardened except only SHSTK on (-fcf-protection=return)"),
+    ("elf32_real",
+     ["-m32", "-fstack-protector-all", "-pie", "-fPIE",
+      "-Wl,-z,relro,-z,now", "-Wl,-z,noexecstack",
+      "-O2", "-D_FORTIFY_SOURCE=2"],
+     "real 32-bit compile (-m32; needs gcc-multilib)"),
 ]
 
 # Expected verdicts for the gcc matrix (RELRO, canary, NX, PIE,
-# FORTIFY, RPATH) — the Step 7 test asserts these exactly.
+# FORTIFY, RPATH, CET) — the Step 7 test asserts these exactly.
 EXPECTED = {
     "hardened":     {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 100, "grade": "A", "exit": 0},
     "unhardened":   {"RELRO": "Missing", "canary": "Missing",
                      "NX": "Missing", "PIE": "Missing",
                      "FORTIFY": "Missing", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 10, "grade": "F", "exit": 1},
     "partial_relro": {"RELRO": "Partial", "canary": "Present",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 90, "grade": "A", "exit": 1},
     "no_pie":       {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Missing",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 90, "grade": "A", "exit": 1},
     "no_canary":    {"RELRO": "Present", "canary": "Missing",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 75, "grade": "C", "exit": 1},
     "no_nx":        {"RELRO": "Present", "canary": "Present",
                      "NX": "Missing", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 75, "grade": "C", "exit": 1},
     "no_fortify":   {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Missing", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 95, "grade": "A", "exit": 1},
     "static":       {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Missing",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 90, "grade": "A", "exit": 1},
     "static_pie":   {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 100, "grade": "A", "exit": 0},
     "rpath":        {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Missing",
+                     "CET": "Present",
                      "score": 90, "grade": "A", "exit": 1},
     "runpath":      {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Missing",
+                     "CET": "Present",
                      "score": 90, "grade": "A", "exit": 1},
     "stripped":     {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 100, "grade": "A", "exit": 0},
     "shared":       {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "n/a",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 100, "grade": "A", "exit": 0},
     "reloc":        {"RELRO": "n/a", "canary": "Present",
                      "NX": "n/a", "PIE": "n/a",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "n/a",
                      "score": 100, "grade": "A", "exit": 0},
     "elf32_le":     {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Missing",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Present",
                      "score": 90, "grade": "A", "exit": 1},
     "elf32_be":     {"RELRO": "Present", "canary": "Present",
                      "NX": "Present", "PIE": "Present",
                      "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "n/a",
                      "score": 100, "grade": "A", "exit": 0},
+    "cet_none":     {"RELRO": "Present", "canary": "Present",
+                     "NX": "Present", "PIE": "Present",
+                     "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Missing",
+                     "score": 95, "grade": "A", "exit": 1},
+    "cet_ibt":      {"RELRO": "Present", "canary": "Present",
+                     "NX": "Present", "PIE": "Present",
+                     "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Partial",
+                     "score": 95, "grade": "A", "exit": 1},
+    "cet_shstk":    {"RELRO": "Present", "canary": "Present",
+                     "NX": "Present", "PIE": "Present",
+                     "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Partial",
+                     "score": 95, "grade": "A", "exit": 1},
+    "elf32_real":   {"RELRO": "Present", "canary": "Present",
+                     "NX": "Present", "PIE": "Present",
+                     "FORTIFY": "Present", "RPATH": "Present",
+                     "CET": "Missing",
+                     "score": 95, "grade": "A", "exit": 1},
 }
 
 
@@ -237,11 +296,16 @@ def _strtab(names):
 
 
 def build_elf32(path, endian, etype, machine, stack_flags, relro,
-                bind_via, canary, fortified):
+                bind_via, canary, fortified, cet=False):
     """Write a minimal but well-formed 32-bit ELF with chosen flags.
 
     endian: "<" little or ">" big. bind_via: "FLAGS" (DT_FLAGS +
     DF_BIND_NOW) or "FLAGS_1" (DT_FLAGS_1 + DF_1_NOW) or None.
+    cet: add a PT_GNU_PROPERTY segment + a .note.gnu.property
+    section carrying the x86 IBT+SHSTK feature bits (32-bit note:
+    property data padded to 4 bytes). Only meaningful for x86 —
+    the PowerPC fixture has no CET note, and the tool reports
+    CET n/a for it.
     The file has one PT_LOAD covering everything, a GNU_STACK, an
     optional GNU_RELRO, a PT_DYNAMIC, a .dynsym with the canary and
     fortified symbols, and the section headers to match.
@@ -254,8 +318,19 @@ def build_elf32(path, endian, etype, machine, stack_flags, relro,
         sym_names.append("__memcpy_chk")
     sym_names += ["memcpy", "printf"]
     dynstr, dyn_off = _strtab(sym_names)
-    shstr, sh_off = _strtab([".text", ".dynamic", ".dynsym",
-                             ".dynstr", ".shstrtab"])
+    sh_names = [".text", ".dynamic", ".dynsym", ".dynstr",
+                ".shstrtab"]
+    if cet:
+        sh_names.insert(1, ".note.gnu.property")
+    shstr, sh_off = _strtab(sh_names)
+    nsec = len(sh_names) + 1  # + the null section
+
+    # The CET note: one GNU property, x86 feature-used, IBT+SHSTK.
+    note = b""
+    if cet:
+        note = struct.pack(endian + "III", 4, 12, 5) + b"GNU\x00" \
+            + struct.pack(endian + "II", 0xc0000002, 4) \
+            + struct.pack(endian + "I", 0x3)
 
     # Dynamic entries.
     dyn_entries = [(1, dyn_off["libc.so.6"])]  # DT_NEEDED
@@ -268,15 +343,16 @@ def build_elf32(path, endian, etype, machine, stack_flags, relro,
 
     # Layout.
     ehsize, phentsize, shentsize = 52, 32, 40
-    nphdr = 4 if relro else 3
+    nphdr = (4 if relro else 3) + (1 if cet else 0)
     text_off = ehsize + nphdr * phentsize
-    dyn_off_file = text_off + len(text)
+    note_off = text_off + len(text)
+    dyn_off_file = note_off + len(note)
     dynsym_off = dyn_off_file + dyn_size
     dynsym_size = (1 + len(sym_names) - 1) * 16  # null + symbols
     dynstr_off = dynsym_off + dynsym_size
     shstr_off = dynstr_off + len(dynstr)
     shoff = shstr_off + len(shstr)
-    total = shoff + 6 * shentsize
+    total = shoff + nsec * shentsize
     base = 0x08048000
 
     buf = bytearray(total)
@@ -286,7 +362,8 @@ def build_elf32(path, endian, etype, machine, stack_flags, relro,
     struct.pack_into(endian + "16sHHIIIIIHHHHHH", buf, 0,
                      ident, etype, machine, 1,
                      base + text_off, ehsize, shoff, 0,
-                     ehsize, phentsize, nphdr, shentsize, 6, 5)
+                     ehsize, phentsize, nphdr, shentsize, nsec,
+                     nsec - 1)
 
     def phdr(i, ptype, offset, vaddr, filesz, memsz, flags):
         struct.pack_into(endian + "IIIIIIII", buf,
@@ -297,6 +374,10 @@ def build_elf32(path, endian, etype, machine, stack_flags, relro,
     phdr(0, 1, 0, base, total, total, 5)          # PT_LOAD R+X
     phdr(1, 0x6474e551, 0, 0, 0, 0, stack_flags)  # GNU_STACK
     idx = 2
+    if cet:
+        phdr(idx, 0x6474e553, note_off, base + note_off,
+             len(note), len(note), 4)             # GNU_PROPERTY R
+        idx += 1
     if relro:
         phdr(idx, 0x6474e552, dyn_off_file, base + dyn_off_file,
              dyn_size, dyn_size, 6)              # GNU_RELRO RW
@@ -305,6 +386,8 @@ def build_elf32(path, endian, etype, machine, stack_flags, relro,
          dyn_size, dyn_size, 6)                  # PT_DYNAMIC RW
 
     buf[text_off:text_off + len(text)] = text
+    if cet:
+        buf[note_off:note_off + len(note)] = note
     # Dynamic section (patch the vaddr placeholders).
     fixed = []
     for tag, val in dyn_entries:
@@ -331,26 +414,38 @@ def build_elf32(path, endian, etype, machine, stack_flags, relro,
                          name, shtype, flags, addr, offset, size,
                          link, info, align, entsize)
 
+    dynstr_idx = sh_names.index(".dynstr") + 1
     shdr(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     shdr(1, sh_off[".text"], 1, 6, base + text_off, text_off,
          len(text), 0, 0, 16, 0)
-    shdr(2, sh_off[".dynamic"], 6, 3, base + dyn_off_file,
-         dyn_off_file, dyn_size, 4, 0, 4, 8)
-    shdr(3, sh_off[".dynsym"], 11, 2, base + dynsym_off, dynsym_off,
-         dynsym_size, 4, 1, 4, 16)
-    shdr(4, sh_off[".dynstr"], 3, 2, base + dynstr_off, dynstr_off,
+    i = 2
+    if cet:
+        shdr(i, sh_off[".note.gnu.property"], 7, 2,
+             base + note_off, note_off, len(note), 0, 0, 4, 0)
+        i += 1
+    shdr(i, sh_off[".dynamic"], 6, 3, base + dyn_off_file,
+         dyn_off_file, dyn_size, dynstr_idx, 0, 4, 8)
+    i += 1
+    shdr(i, sh_off[".dynsym"], 11, 2, base + dynsym_off, dynsym_off,
+         dynsym_size, dynstr_idx, 1, 4, 16)
+    i += 1
+    shdr(i, sh_off[".dynstr"], 3, 2, base + dynstr_off, dynstr_off,
          len(dynstr), 0, 0, 1, 0)
-    shdr(5, sh_off[".shstrtab"], 3, 0, 0, shstr_off, len(shstr),
+    i += 1
+    shdr(i, sh_off[".shstrtab"], 3, 0, 0, shstr_off, len(shstr),
          0, 0, 1, 0)
     with open(path, "wb") as fh:
         fh.write(bytes(buf))
 
 
 def build_synthetic():
-    """The 32-bit LE (ET_EXEC, DT_FLAGS) and BE (ET_DYN, DT_FLAGS_1)
-    fixtures — gcc cannot build these here (no multilib)."""
+    """The 32-bit LE (ET_EXEC, DT_FLAGS, CET note) and BE (ET_DYN,
+    DT_FLAGS_1, PowerPC — no CET note) fixtures. The BE fixture
+    stays hand-built: gcc cannot build big-endian here at all.
+    The LE fixture keeps its CET note so its score is unchanged
+    now that CET is checked (CC-014)."""
     build_elf32(os.path.join(OUT, "elf32_le"), "<", 2, 3, 6, True,
-                "FLAGS", True, True)
+                "FLAGS", True, True, cet=True)
     build_elf32(os.path.join(OUT, "elf32_be"), ">", 3, 20, 6, True,
                 "FLAGS_1", True, True)
     return ["elf32_le", "elf32_be"]

@@ -70,5 +70,17 @@
     "score": 90,
     "grade": "A",
     "exit": 1
+  },
+  "pe32_small_lc_dir.exe": {
+    "ASLR": "Present",
+    "DEP": "Present",
+    "CFG": "Present",
+    "SafeSEH": "Present",
+    "GS": "Present",
+    "FI": "Present",
+    "Isolation": "Present",
+    "score": 100,
+    "grade": "A",
+    "exit": 0
   }
 }

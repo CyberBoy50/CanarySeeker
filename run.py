@@ -5,7 +5,7 @@ build-pe, menu.
 Usage:
     python run.py setup            # create venv (first time only)
     python run.py check <binary>   # check a binary (flags pass through)
-    python run.py test             # run the 8 build-plan step tests
+    python run.py test             # run the 9 build-plan step tests
     python run.py doctor           # check the setup
     python run.py build-bins       # regenerate the ELF test binaries
     python run.py build-pe         # regenerate the PE test fixtures

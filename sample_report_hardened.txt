@@ -1,8 +1,8 @@
-CanarySeeker v1.1 — Binary Exploit-Mitigation Checker
+CanarySeeker v1.2 — Binary Exploit-Mitigation Checker
 by CyberBoy50 — AUTHORIZED USE ONLY
 DISCLAIMER — AUTHORIZED USE ONLY. This tool was built for ethical, authorized security testing only. You are using it on your own responsibility. The authors are not responsible for how you use it, or for anything that happens because of your use. Only test systems, code, and data you own or have explicit written permission to test — testing anything else may be illegal (for example, PECA 2016 in Pakistan).
 ==========================================================
-Scanned: 2026-11-25 19:23:03
+Scanned: 2026-11-25 19:42:46
 Binaries: 1 (0 skipped)
 
 Binary: test_bins/hardened
@@ -20,6 +20,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (0)
 ----------------------------------------------------------
@@ -29,4 +30,4 @@ Hardening score: 100/100 (grade A) — extra, beyond the PDF
 
 ==========================================================
 
-End of report — CanarySeeker v1.1 by CyberBoy50
+End of report — CanarySeeker v1.2 by CyberBoy50

@@ -174,7 +174,7 @@ files in the folder (the manifest and the C source) are reported
 as skipped, not crashed on.
 
 **Test:** the suite runs every binary in the manifest and asserts
-each verdict, score, grade and exit code — 16 binaries, no
+each verdict, score, grade and exit code — 20 binaries, no
 exceptions.
 
 ## Step 8 — Stretch items and the beyond-PDF extras
@@ -193,7 +193,10 @@ python run.py check test_pe/pe32_partial_cfg.exe
 Expected: the 64-bit hardened PE is 100/100, the unhardened one
 5/100; the no-reloc PE shows ASLR Present with the note that it is
 ineffective (DYNAMIC_BASE without a `.reloc` section); the
-partial-CFG PE shows CFG Partial.
+partial-CFG PE shows CFG Partial; the small-load-config-dir PE
+shows CFG and SafeSEH both Present even though its data-directory
+size (64) is smaller than the struct (0xA0) — the v1.2 regression
+case for trusting the struct's Size field.
 
 **Batch mode and JSON:**
 
@@ -208,10 +211,43 @@ fallback (`stripped`), static binaries (`static`, `static_pie`),
 RPATH/RUNPATH (`rpath`, `runpath`), the Fortify score, and the
 hardening score + grade on every report.
 
-**Test:** the suite checks all six PE fixtures against their
+**Test:** the suite checks all seven PE fixtures against their
 manifest, the batch summary, and that the JSON report parses and
 matches the text verdicts — plus the readelf and pwntools oracles
 for the ELF verdicts.
+
+## Step 9 — CET, a real 32-bit compile, a real Windows binary
+
+**CET (CC-014)** — read the IBT/SHSTK bits out of the
+`PT_GNU_PROPERTY` segment's GNU property note
+(`GNU_PROPERTY_X86_FEATURE_1_USED`, `0xc0000002`; IBT `0x1`,
+SHSTK `0x2`). Three fixtures prove each outcome
+(`-fcf-protection=none` / `=branch` / `=return`), cross-checked
+against `readelf -n`; CET is n/a for a non-x86 machine
+(`elf32_be`, PowerPC) and for a relocatable object (`test.o`).
+CET Missing / Partial is a Low finding (−5).
+
+**A real 32-bit compile** — `gcc-multilib` installed, then
+`elf32_real` built with `-m32` and the hardened flags. Its CET is
+genuinely Missing: Ubuntu's gcc enables CET by default for
+64-bit only, so the binary has no `.note.gnu.property` at all
+(readelf agrees). The hand-built 32-bit LE fixture carries a
+real CET note, so its CET is Present and its score is unchanged.
+
+**A real Windows binary** — Microsoft Sysinternals Process
+Explorer (`real_world/ProcExp.exe`, from
+`live.sysinternals.com`), scanned read-only, local only, never
+pushed. 95/100, grade A — the only finding is Force Integrity.
+Scanning it caught the v1.1 load-config bug (the struct's Size
+field is authoritative, not the data-directory size), fixed in
+v1.2 with `pe32_small_lc_dir.exe` as the regression fixture.
+
+**Test:** Step 9 asserts the three CET fixtures against
+`readelf -n`, the real 32-bit binary's class/machine/type and
+its genuinely-missing CET, the small-directory fixture's CFG and
+SafeSEH, and every Process Explorer verdict — or skips the
+real-PE checks with a clear note when the local-only binary is
+absent.
 
 ## Running all the tests
 
@@ -222,7 +258,7 @@ python run.py test
 Expected:
 
 ```
-PASSED: 344   FAILED: 0   SKIPPED: 0
+PASSED: 456   FAILED: 0   SKIPPED: 0
 ALL CHECKS PASSED
 ```
 

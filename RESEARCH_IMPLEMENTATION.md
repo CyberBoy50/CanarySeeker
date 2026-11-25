@@ -148,14 +148,21 @@ if neither works, readelf is the oracle; say so, do not fake it).
   section headers). PE32 load config: SecurityCookie at offset 0x40,
   SEHandlerTable 0x40/0x48, SEHandlerCount, GuardCFCheckFunctionPointer
   0x70/0x80 — the offsets differ between PE32 and PE32+; read them from
-  the spec table in code, with the size field as the guard (if the load
-  config is smaller than the field's offset, the field is absent).
+  the spec table in code. **v1.2 lesson — the struct's own Size field is
+  the guard, not the data-directory Size:** a real binary (Process
+  Explorer) has a directory size of 64 while the struct's Size field
+  is 192, and the SEH table (offset 64) and GuardCF pointer (offset
+  72) live past the directory size. Clamping to the directory size
+  hid them and wrongly reported CFG Partial and SafeSEH Missing.
+  Trust the Size field; every field read is still bounds-checked
+  against the file, so a lying Size can only hide fields, never
+  crash the tool. `pe32_small_lc_dir.exe` is the regression fixture.
 - PE test fixtures: a Python PE writer (`build_test_pe.py`) that emits a
   minimal PE32 and PE32+ with chosen DllCharacteristics + a load config
   with chosen fields — the same trick as the AXML writer for APKSeeker.
-  Live PE testing on the user's Windows 11 host is the follow-up; say so
-  in the report if mingw is not available here (check for
-  `x86_64-w64-mingw32-gcc` first).
+  Live PE testing is done in v1.2: Microsoft Sysinternals Process
+  Explorer, downloaded from `live.sysinternals.com`, scanned read-only
+  (local only, never pushed) — 95/100, grade A.
 
 ## 8. Test binaries — compiled, not committed
 
@@ -172,7 +179,15 @@ if neither works, readelf is the oracle; say so, do not fake it).
   - static: `-static` (and `-static-pie` if the toolchain supports it)
   - stripped: `strip` the binary afterwards (tests the .dynsym fallback)
   - 32-bit: `-m32` (only if `gcc-multilib` is installed — check first;
-    if not, document it as untested, do not fake it)
+    if not, document it as untested, do not fake it). v1.2: multilib
+    installed, `elf32_real` built and tested; note that Ubuntu's gcc
+    enables CET by default for 64-bit only, so the real `-m32` binary
+    has no CET note and CET is genuinely Missing for it.
+  - CET: `-fcf-protection=none` / `=branch` (IBT only) /
+    `=return` (SHSTK only) / `=full` (both) — the note is read from
+    the `PT_GNU_PROPERTY` segment (property `0xc0000002`, IBT `0x1`,
+    SHSTK `0x2`; property data padded to 8 bytes in 64-bit notes,
+    4 bytes in 32-bit notes).
 - The generator writes the binaries into `test_bins/` and a manifest of
   the flags used per binary. Binary files are NEVER committed to GitHub
   (push-files is text-only — the APKSeeker lesson); they regenerate with
@@ -206,4 +221,5 @@ if neither works, readelf is the oracle; say so, do not fake it).
 - Finding codes (family pattern): CC-001 RELRO, CC-002 stack canary,
   CC-003 NX, CC-004 PIE, CC-005 FORTIFY, CC-006 RPATH/RUNPATH (extra),
   CC-007 PE ASLR, CC-008 PE DEP/NX, CC-009 PE CFG, CC-010 PE SafeSEH,
-  CC-011 PE GS cookie.
+  CC-011 PE GS cookie, CC-012 PE Force Integrity (extra), CC-013 PE
+  isolation (extra), CC-014 CET / IBT-SHSTK (v1.2, extra).

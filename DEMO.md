@@ -1,8 +1,10 @@
 # CanarySeeker — Demo
 
-Real runs on the lab binaries, 25 November 2026. Every binary was
-compiled in this repo from `test_bins/test_prog.c` with gcc 13.3.0
-(the PE fixtures were written by `build_test_pe.py`).
+Real runs on the lab binaries, 25–26 November 2026 (v1.2). Every
+binary was compiled in this repo from `test_bins/test_prog.c`
+with gcc 13.3.0 (the PE fixtures were written by
+`build_test_pe.py`); the real Windows binary in section 8 is
+Microsoft Sysinternals Process Explorer, scanned read-only.
 
 ## 1. The fully-hardened binary — 100/100, grade A
 
@@ -25,6 +27,8 @@ python run.py check test_bins/hardened
       1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
  [Present ] [CC-006] RPATH / RUNPATH
       No DT_RPATH or DT_RUNPATH in the dynamic section.
+ [Present ] [CC-014] CET (IBT / SHSTK)
+      GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 ──────────────────────────────────────────────────────────
  Hardening score       : 100/100 (grade A)
  Findings              : 0 (none)
@@ -60,6 +64,8 @@ python run.py check test_bins/unhardened
       No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
  [Present ] [CC-006] RPATH / RUNPATH
       No DT_RPATH or DT_RUNPATH in the dynamic section.
+ [Present ] [CC-014] CET (IBT / SHSTK)
+      GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 ──────────────────────────────────────────────────────────
  Hardening score       : 10/100 (grade F)
  Findings              : 5 (3 high, 1 medium, 1 low)
@@ -145,11 +151,15 @@ python run.py check test_bins/
 ```
 
 ```
- Batch summary (16 binaries, 2 skipped)
+ Batch summary (20 binaries, 2 skipped)
   File                         Fmt  Score   Grade  Missing
 ──────────────────────────────────────────────────────────
+  cet_ibt                      ELF  95      A      1
+  cet_none                     ELF  95      A      1
+  cet_shstk                    ELF  95      A      1
   elf32_be                     ELF  100     A      0
   elf32_le                     ELF  90      A      1
+  elf32_real                   ELF  95      A      1
   hardened                     ELF  100     A      0
   libtest.so                   ELF  100     A      0
   no_canary                    ELF  75      C      1
@@ -211,7 +221,92 @@ source code, same compiler, one flag apart. The tool shows it
 because it reads the bind-now flag out of the dynamic section,
 not just the segment.
 
-## 7. Sample reports
+## 7. CET — the new check (CC-014)
+
+CET is read from the `PT_GNU_PROPERTY` segment: a GNU property
+note whose x86 feature-used property (`0xc0000002`) carries the
+IBT bit (`0x1`) and the SHSTK bit (`0x2`). Three fixtures prove
+each outcome, compiled with `-fcf-protection`:
+
+```bash
+python run.py check test_bins/cet_none    # -fcf-protection=none
+python run.py check test_bins/cet_ibt     # -fcf-protection=branch
+python run.py check test_bins/cet_shstk   # -fcf-protection=return
+```
+
+```
+ [Missing ] [CC-014] CET (IBT / SHSTK)     # cet_none
+      No GNU_PROPERTY note with the x86 IBT/SHSTK feature bits — CET is not enabled.
+ [Partial ] [CC-014] CET (IBT / SHSTK)     # cet_ibt
+      GNU_PROPERTY note: only IBT enabled — SHSTK is missing.
+ [Partial ] [CC-014] CET (IBT / SHSTK)     # cet_shstk
+      GNU_PROPERTY note: only SHSTK enabled — IBT is missing.
+```
+
+Each one scores 95/100 (CET is a Low finding, −5), grade A,
+exit 1. The hardened binary is Present on both bits — and so is
+the unhardened one, because Ubuntu's gcc enables CET by default
+for 64-bit. The surprise is the real 32-bit compile,
+`elf32_real`: Ubuntu's gcc enables CET by default for 64-bit
+**only**, so a `-m32` build has no `.note.gnu.property` section
+at all and CET is genuinely Missing (95/100) — readelf agrees,
+and the Step 9 test asserts exactly that. A 32-bit build needs
+an explicit `-fcf-protection=full`. CET is n/a for the PowerPC
+fixture (`elf32_be`, not an x86 machine) and for the relocatable
+object (`test.o`, decided at link time).
+
+## 8. A real Windows binary — Process Explorer
+
+```bash
+python run.py check real_world/ProcExp.exe
+```
+
+`real_world/ProcExp.exe` is Microsoft Sysinternals Process
+Explorer, downloaded from `https://live.sysinternals.com/ProcExp.exe`
+(SHA-256
+`d6112a1ff7caccbaf3dd06af6db72355f007c114f5a09fe96f83eb4105cc9b61`),
+scanned read-only on 26 November 2026. It is not in the GitHub
+push (binary, local only) and it never runs — the tool only reads
+its headers.
+
+```
+ [Present ] [CC-007] PE ASLR
+      DYNAMIC_BASE set; .reloc section present.
+ [Present ] [CC-008] PE DEP / NX
+      NX_COMPAT set — data execution prevention is on.
+ [Present ] [CC-009] PE CFG
+      GUARD_CF set and load-config GuardCFCheckFunctionPointer is 0x514b00.
+ [Present ] [CC-010] PE SafeSEH
+      Load-config SEH handler table present: 394 handler(s) at 0x542ae0.
+ [Present ] [CC-011] PE GS cookie
+      Load-config SecurityCookie is 0x552040 — stack cookies are in use.
+ [Missing ] [CC-012] PE Force Integrity
+      FORCE_INTEGRITY not set — the image loads unsigned.
+ [Present ] [CC-013] PE isolation
+      RT_MANIFEST resource present — the binary carries its own activation manifest.
+──────────────────────────────────────────────────────────
+ Hardening score       : 95/100 (grade A)
+ Findings              : 1 (0 high, 0 medium, 1 low)
+```
+
+Exit code 1. The one finding is Force Integrity: Microsoft ships
+Process Explorer unsigned in the sense that the loader is not
+forced to check a signature — a Low, and the only thing keeping
+it off 100/100.
+
+Scanning this binary caught a real bug in v1.1: the load-config
+data-directory size here is 64, but the struct's own Size field
+is 192 — the SEH handler table (offset 64) and the GuardCF
+check-function pointer (offset 72) live past the directory size.
+v1.1 clamped the struct to the directory size, so it reported
+CFG Partial and SafeSEH Missing (75/100, grade C) on a binary
+that has both. v1.2 trusts the struct's Size field — every field
+read is still bounds-checked against the file — and the
+`pe32_small_lc_dir.exe` fixture is the regression test: same
+shape (directory 64, struct 0xA0), CFG and SafeSEH both Present,
+100/100.
+
+## 9. Sample reports
 
 - `sample_report_hardened.txt` — the hardened binary (0 findings)
 - `sample_report_unhardened.txt` — the unhardened binary

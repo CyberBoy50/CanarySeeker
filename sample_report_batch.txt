@@ -1,9 +1,90 @@
-CanarySeeker v1.1 — Binary Exploit-Mitigation Checker
+CanarySeeker v1.2 — Binary Exploit-Mitigation Checker
 by CyberBoy50 — AUTHORIZED USE ONLY
 DISCLAIMER — AUTHORIZED USE ONLY. This tool was built for ethical, authorized security testing only. You are using it on your own responsibility. The authors are not responsible for how you use it, or for anything that happens because of your use. Only test systems, code, and data you own or have explicit written permission to test — testing anything else may be illegal (for example, PECA 2016 in Pakistan).
 ==========================================================
-Scanned: 2026-11-25 19:23:04
-Binaries: 16 (2 skipped)
+Scanned: 2026-11-25 19:42:47
+Binaries: 20 (2 skipped)
+
+Binary: test_bins/cet_ibt
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Partial  GNU_PROPERTY note: only IBT enabled — SHSTK is missing.
+
+Findings (1)
+----------------------------------------------------------
+  [LOW] [CC-014] CET (IBT / SHSTK): Partial
+      Evidence: GNU_PROPERTY note: only IBT enabled — SHSTK is missing.
+      Fix: Compile with -fcf-protection=full (IBT and SHSTK).
+
+Hardening score: 95/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/cet_none
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Missing  No GNU_PROPERTY note with the x86 IBT/SHSTK feature bits — CET is not enabled.
+
+Findings (1)
+----------------------------------------------------------
+  [LOW] [CC-014] CET (IBT / SHSTK): Missing
+      Evidence: No GNU_PROPERTY note with the x86 IBT/SHSTK feature bits — CET is not enabled.
+      Fix: Compile with -fcf-protection=full (IBT and SHSTK).
+
+Hardening score: 95/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/cet_shstk
+Format: ELF
+Header: 64-bit little, ET_DYN, x86-64
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Partial  GNU_PROPERTY note: only SHSTK enabled — IBT is missing.
+
+Findings (1)
+----------------------------------------------------------
+  [LOW] [CC-014] CET (IBT / SHSTK): Partial
+      Evidence: GNU_PROPERTY note: only SHSTK enabled — IBT is missing.
+      Fix: Compile with -fcf-protection=full (IBT and SHSTK).
+
+Hardening score: 95/100 (grade A) — extra, beyond the PDF
+
+==========================================================
 
 Binary: test_bins/elf32_be
 Format: ELF
@@ -20,6 +101,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __memcpy_chk. Fortify score 50% (1 fortified, 1 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  n/a      Machine PowerPC — CET (Control-flow Enforcement Technology) is an x86 feature.
 
 Findings (0)
 ----------------------------------------------------------
@@ -44,6 +126,7 @@ Verdict table
   [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
   [CC-005] FORTIFY            Present  1 fortified function(s): __memcpy_chk. Fortify score 50% (1 fortified, 1 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -52,6 +135,33 @@ Findings (1)
       Fix: Compile and link with -pie -fPIE.
 
 Hardening score: 90/100 (grade A) — extra, beyond the PDF
+
+==========================================================
+
+Binary: test_bins/elf32_real
+Format: ELF
+Header: 32-bit little, ET_DYN, x86
+Symbol table: .symtab
+Needed libraries: libc.so.6
+Fortify: 1 fortified, 0 fortifiable, score 100%
+
+Verdict table
+----------------------------------------------------------
+  [CC-001] RELRO              Present  GNU_RELRO present + bind-now (DF_BIND_NOW in DT_FLAGS) — Full RELRO.
+  [CC-002] Stack canary       Present  Symbol __stack_chk_fail found in .symtab.
+  [CC-003] NX                 Present  GNU_STACK segment present without the execute flag (RW) — the stack is not executable.
+  [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
+  [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
+  [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Missing  No GNU_PROPERTY note with the x86 IBT/SHSTK feature bits — CET is not enabled.
+
+Findings (1)
+----------------------------------------------------------
+  [LOW] [CC-014] CET (IBT / SHSTK): Missing
+      Evidence: No GNU_PROPERTY note with the x86 IBT/SHSTK feature bits — CET is not enabled.
+      Fix: Compile with -fcf-protection=full (IBT and SHSTK).
+
+Hardening score: 95/100 (grade A) — extra, beyond the PDF
 
 ==========================================================
 
@@ -70,6 +180,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (0)
 ----------------------------------------------------------
@@ -94,6 +205,7 @@ Verdict table
   [CC-004] PIE                n/a      Shared library (ET_DYN, SONAME set) — DSO, position-independent by nature.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (0)
 ----------------------------------------------------------
@@ -118,6 +230,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -144,6 +257,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Missing  No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -170,6 +284,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -196,6 +311,7 @@ Verdict table
   [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -222,6 +338,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -248,6 +365,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Missing  Hard-coded library search path: RUNPATH=/opt/lab/lib — an attacker who can write there gets their library loaded.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -274,6 +392,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Missing  Hard-coded library search path: RUNPATH=/opt/lab/lib — an attacker who can write there gets their library loaded.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -299,6 +418,7 @@ Verdict table
   [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
   [CC-005] FORTIFY            Present  9 fortified function(s): ___asprintf_chk, ___fprintf_chk, __asprintf_chk, __fprintf_chk, __memcpy_chk, __memmove_chk, ... (9 total). Fortify score 60% (9 fortified, 6 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (1)
 ----------------------------------------------------------
@@ -324,6 +444,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  9 fortified function(s): ___asprintf_chk, ___fprintf_chk, __asprintf_chk, __fprintf_chk, __memcpy_chk, __memmove_chk, ... (9 total). Fortify score 60% (9 fortified, 6 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (0)
 ----------------------------------------------------------
@@ -348,6 +469,7 @@ Verdict table
   [CC-004] PIE                Present  File type ET_DYN — position-independent executable.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (0)
 ----------------------------------------------------------
@@ -371,6 +493,7 @@ Verdict table
   [CC-004] PIE                n/a      Relocatable object (ET_REL) — not linked yet.
   [CC-005] FORTIFY            Present  1 fortified function(s): __strcpy_chk. Fortify score 100% (1 fortified, 0 still plain).
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  n/a      File type ET_REL — CET is decided at link time.
 
 Findings (0)
 ----------------------------------------------------------
@@ -395,6 +518,7 @@ Verdict table
   [CC-004] PIE                Missing  File type ET_EXEC — the binary loads at a fixed address.
   [CC-005] FORTIFY            Missing  No *_chk symbols — no fortified functions. 2 fortifiable function(s) used plainly: memcpy, strcpy.
   [CC-006] RPATH / RUNPATH    Present  No DT_RPATH or DT_RUNPATH in the dynamic section.
+  [CC-014] CET (IBT / SHSTK)  Present  GNU_PROPERTY note: x86 feature IBT + SHSTK both enabled.
 
 Findings (5)
 ----------------------------------------------------------
@@ -423,4 +547,4 @@ Skipped (2)
   test_bins/manifest.json — Not a binary I can check: test_bins/manifest.json is neither ELF nor PE (checked the first bytes — this is not a binary file)
   test_bins/test_prog.c — Not a binary I can check: test_bins/test_prog.c is neither ELF nor PE (checked the first bytes — this is not a binary file)
 
-End of report — CanarySeeker v1.1 by CyberBoy50
+End of report — CanarySeeker v1.2 by CyberBoy50

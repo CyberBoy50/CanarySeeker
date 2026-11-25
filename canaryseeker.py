@@ -8,8 +8,9 @@ WHAT IT DOES
   the struct module — no external parser, no readelf, no LIEF, no
   pe-parse — and reports which exploit mitigations are switched on:
   for ELF binaries NX (GNU_STACK), PIE (file type), stack canary
-  (__stack_chk_fail symbol), RELRO (GNU_RELRO plus the bind-now flag)
-  and fortified functions (*_chk symbols); for PE binaries NX
+  (__stack_chk_fail symbol), RELRO (GNU_RELRO plus the bind-now flag),
+  fortified functions (*_chk symbols) and CET / IBT-SHSTK (the
+  GNU_PROPERTY note); for PE binaries NX
   (NX_COMPAT), ASLR (DYNAMIC_BASE + HIGH_ENTROPY_VA), CFG (GUARD_CF),
   SafeSEH (load-config SEH handler table), the GS stack cookie, Force
   Integrity and isolation. Every verdict is marked Present, Partial,
@@ -57,6 +58,8 @@ uses AI and is at the user's level, so this build goes further):
     -> parse_symbols() tries .symtab, then .dynsym, and says which
   * Static-binary handling — no dynamic section is a clean verdict,
     never a crash ("Full (static — no lazy binding)")
+  * CET check (CC-014) — IBT / SHSTK from the GNU_PROPERTY note
+    (x86 ELF only; other machines and relocatable objects are n/a)
   * RPATH/RUNPATH check (checksec parity) — CC-006
   * Fortified count + fortifiable list + Fortify score
     (checksec.py parity)
@@ -103,7 +106,7 @@ import struct
 import sys
 import textwrap
 
-VERSION = "1.1"
+VERSION = "1.2"
 AUTHOR = "CyberBoy50"
 DISCLAIMER = ("DISCLAIMER — AUTHORIZED USE ONLY. This tool was built for "
               "ethical, authorized security testing only. You are using it "
@@ -255,7 +258,8 @@ class Reader:
 
 # --- Check catalogue ---------------------------------------------------------
 # (code, title, description) — CC-001..CC-011 are the PDF's checks plus
-# the stretch PE checks; CC-012/CC-013 are beyond-PDF extras.
+# the stretch PE checks; CC-012/CC-013 are beyond-PDF extras;
+# CC-014 (CET) is the v1.2 beyond-PDF extra.
 CHECKS = [
     ("CC-001", "RELRO",
      "GNU_RELRO segment + bind-now flag (Full / Partial / Missing)"),
@@ -284,6 +288,9 @@ CHECKS = [
      "FORCE_INTEGRITY flag in DllCharacteristics (extra)"),
     ("CC-013", "PE isolation",
      "RT_MANIFEST resource present (extra)"),
+    ("CC-014", "CET (IBT / SHSTK)",
+     "GNU_PROPERTY note: x86 feature-used bits IBT + SHSTK (ELF, "
+     "x86 only)"),
 ]
 
 SEVERITY_ORDER = {"critical": 4, "high": 3, "medium": 2, "low": 1}
@@ -355,6 +362,11 @@ PT_NAMES = {0: "NULL", 1: "LOAD", 2: "DYNAMIC", 3: "INTERP", 4: "NOTE",
             0x6474e552: "GNU_RELRO", 0x6474e553: "GNU_PROPERTY"}
 PT_NULL, PT_LOAD, PT_DYNAMIC, PT_INTERP = 0, 1, 2, 3
 PT_GNU_STACK, PT_GNU_RELRO = 0x6474e551, 0x6474e552
+PT_GNU_PROPERTY = 0x6474e553
+NT_GNU_PROPERTY_TYPE_0 = 5
+GNU_PROPERTY_X86_FEATURE_1_USED = 0xc0000002
+GNU_PROPERTY_X86_FEATURE_1_IBT = 0x1
+GNU_PROPERTY_X86_FEATURE_1_SHSTK = 0x2
 PF_X, PF_W, PF_R = 1, 2, 4
 SHT_SYMTAB, SHT_DYNSYM, SHT_STRTAB = 2, 11, 3
 DT_NULL, DT_NEEDED, DT_STRTAB, DT_STRSZ = 0, 1, 5, 10
@@ -442,6 +454,7 @@ def parse_elf(data, path):
                                              e_shentsize, e_shstrndx,
                                              is64, endian)
     elf["dynamic"] = _parse_dynamic(r, elf["segments"], is64, endian)
+    elf["cet"] = _parse_cet(r, elf["segments"], is64, endian)
     elf["symbols"] = _parse_symbols(r, elf["sections"], is64, endian)
     elf["is_static"] = not any(
         s["type"] == PT_DYNAMIC for s in elf["segments"])
@@ -523,6 +536,68 @@ def _parse_section_headers(r, shoff, shnum, shentsize, shstrndx,
             "entsize": s["entsize"],
         })
     return sections
+
+
+def _parse_cet(r, segments, is64, endian):
+    """IBT/SHSTK bits from the PT_GNU_PROPERTY segment's GNU notes.
+
+    Returns {"found": bool, "ibt": bool, "shstk": bool} — found is
+    True only when a GNU property note carrying the x86
+    feature-used property (0xc0000002) was actually read. A note
+    with no feature-used property (gcc still emits the note with
+    -fcf-protection=none, carrying only the ISA-needed property)
+    means CET is off, not unknown. Property data is padded to
+    4 bytes in 32-bit files and 8 bytes in 64-bit files.
+    """
+    out = {"found": False, "ibt": False, "shstk": False}
+    prop_align = 8 if is64 else 4
+    for seg in segments:
+        if seg["type"] != PT_GNU_PROPERTY:
+            continue
+        off = seg["offset"]
+        end = off + seg["filesz"]
+        while off + 12 <= end:
+            try:
+                namesz, descsz, ntype = r.unpack(endian + "III", off)
+            except CanarySeekerError:
+                break
+            if namesz < 0 or descsz < 0:
+                break
+            name_off = off + 12
+            desc_off = name_off + ((namesz + 3) // 4 * 4)
+            note_end = desc_off + descsz
+            if note_end > end:
+                break
+            try:
+                name = r.bytes(name_off, namesz)
+            except CanarySeekerError:
+                break
+            if ntype == NT_GNU_PROPERTY_TYPE_0 and \
+                    name.rstrip(b"\x00") == b"GNU":
+                p = desc_off
+                while p + 8 <= note_end:
+                    try:
+                        pr_type, pr_datasz = r.unpack(endian + "II", p)
+                    except CanarySeekerError:
+                        break
+                    if pr_type == GNU_PROPERTY_X86_FEATURE_1_USED \
+                            and pr_datasz >= 4:
+                        try:
+                            bits = r.u32(p + 8, endian)
+                        except CanarySeekerError:
+                            break
+                        out["found"] = True
+                        out["ibt"] = bool(
+                            bits & GNU_PROPERTY_X86_FEATURE_1_IBT)
+                        out["shstk"] = bool(
+                            bits & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
+                    step = 8 + ((pr_datasz + prop_align - 1)
+                                // prop_align * prop_align)
+                    if step <= 0:
+                        break
+                    p += step
+            off = desc_off + ((descsz + 3) // 4 * 4)
+    return out
 
 
 def _parse_dynamic(r, segments, is64, endian):
@@ -773,7 +848,14 @@ def _parse_load_config(r, pe):
         size = r.u32(off)
     except CanarySeekerError:
         return {}
-    if size < 4 or size > entry["size"]:
+    # The struct's own Size field is authoritative: real linkers
+    # write a data-directory size smaller than the struct
+    # (Process Explorer: directory 64, struct 192 — the SEH table
+    # and GuardCF pointer live past offset 64, and clamping to the
+    # directory size hid them). Trust Size; the per-field reads
+    # below are still bounds-checked against the file, so a lying
+    # Size can only hide fields, never crash us.
+    if size < 4:
         size = entry["size"]
     lc = {"size": size, "offset": off}
     table = LC64 if pe["is64"] else LC32
@@ -1052,6 +1134,41 @@ def analyze_elf(elf, path):
         verdicts.append(_verdict(
             "CC-006", "RPATH / RUNPATH", "Present",
             "No DT_RPATH or DT_RUNPATH in the dynamic section."))
+
+    # --- CC-014 CET (IBT / SHSTK) — x86 ELF only ---
+    cet = elf["cet"]
+    if elf["machine"] not in (3, 62):  # EM_386 / EM_X86_64
+        verdicts.append(_verdict(
+            "CC-014", "CET (IBT / SHSTK)", "n/a",
+            "Machine %s — CET (Control-flow Enforcement "
+            "Technology) is an x86 feature."
+            % elf["machine_name"]))
+    elif elf["type"] in (1, 4):  # ET_REL / ET_CORE
+        verdicts.append(_verdict(
+            "CC-014", "CET (IBT / SHSTK)", "n/a",
+            "File type %s — CET is decided at link time."
+            % elf["type_name"]))
+    elif cet["found"] and cet["ibt"] and cet["shstk"]:
+        verdicts.append(_verdict(
+            "CC-014", "CET (IBT / SHSTK)", "Present",
+            "GNU_PROPERTY note: x86 feature IBT + SHSTK both "
+            "enabled."))
+    elif cet["found"] and (cet["ibt"] or cet["shstk"]):
+        have = "IBT" if cet["ibt"] else "SHSTK"
+        missing = "SHSTK" if cet["ibt"] else "IBT"
+        verdicts.append(_verdict(
+            "CC-014", "CET (IBT / SHSTK)", "Partial",
+            "GNU_PROPERTY note: only %s enabled — %s is missing."
+            % (have, missing),
+            "low",
+            "Compile with -fcf-protection=full (IBT and SHSTK)."))
+    else:
+        verdicts.append(_verdict(
+            "CC-014", "CET (IBT / SHSTK)", "Missing",
+            "No GNU_PROPERTY note with the x86 IBT/SHSTK feature "
+            "bits — CET is not enabled.",
+            "low",
+            "Compile with -fcf-protection=full (IBT and SHSTK)."))
 
     findings = _findings_from_verdicts(verdicts)
     score = score_findings(findings)

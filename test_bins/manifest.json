@@ -6,6 +6,7 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 100,
     "grade": "A",
     "exit": 0
@@ -17,6 +18,7 @@
     "PIE": "Missing",
     "FORTIFY": "Missing",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 10,
     "grade": "F",
     "exit": 1
@@ -28,6 +30,7 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 90,
     "grade": "A",
     "exit": 1
@@ -39,6 +42,7 @@
     "PIE": "Missing",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 90,
     "grade": "A",
     "exit": 1
@@ -50,6 +54,7 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 75,
     "grade": "C",
     "exit": 1
@@ -61,6 +66,7 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 75,
     "grade": "C",
     "exit": 1
@@ -72,6 +78,7 @@
     "PIE": "Present",
     "FORTIFY": "Missing",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 95,
     "grade": "A",
     "exit": 1
@@ -83,6 +90,7 @@
     "PIE": "Missing",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 90,
     "grade": "A",
     "exit": 1
@@ -94,6 +102,7 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 100,
     "grade": "A",
     "exit": 0
@@ -105,6 +114,7 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Missing",
+    "CET": "Present",
     "score": 90,
     "grade": "A",
     "exit": 1
@@ -116,7 +126,56 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Missing",
+    "CET": "Present",
     "score": 90,
+    "grade": "A",
+    "exit": 1
+  },
+  "cet_none": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "CET": "Missing",
+    "score": 95,
+    "grade": "A",
+    "exit": 1
+  },
+  "cet_ibt": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "CET": "Partial",
+    "score": 95,
+    "grade": "A",
+    "exit": 1
+  },
+  "cet_shstk": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "CET": "Partial",
+    "score": 95,
+    "grade": "A",
+    "exit": 1
+  },
+  "elf32_real": {
+    "RELRO": "Present",
+    "canary": "Present",
+    "NX": "Present",
+    "PIE": "Present",
+    "FORTIFY": "Present",
+    "RPATH": "Present",
+    "CET": "Missing",
+    "score": 95,
     "grade": "A",
     "exit": 1
   },
@@ -127,6 +186,7 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 100,
     "grade": "A",
     "exit": 0
@@ -138,6 +198,7 @@
     "PIE": "n/a",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 100,
     "grade": "A",
     "exit": 0
@@ -149,6 +210,7 @@
     "PIE": "n/a",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "n/a",
     "score": 100,
     "grade": "A",
     "exit": 0
@@ -160,6 +222,7 @@
     "PIE": "Missing",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "Present",
     "score": 90,
     "grade": "A",
     "exit": 1
@@ -171,6 +234,7 @@
     "PIE": "Present",
     "FORTIFY": "Present",
     "RPATH": "Present",
+    "CET": "n/a",
     "score": 100,
     "grade": "A",
     "exit": 0
